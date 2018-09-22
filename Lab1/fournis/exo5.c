@@ -24,9 +24,11 @@
 
 #define TASK_STK_SIZE       16384            // Size of each task's stacks (# of WORDs)
 
-#define ROBOT_A_PRIO   		8				 // Defining Priority of each task
-#define ROBOT_B_PRIO   		9
-#define CONTROLLER_PRIO     22
+#define ROBOT_A1_PRIO   		8				 // Defining Priority of each task
+#define ROBOT_B1_PRIO   		10
+#define ROBOT_A2_PRIO			9
+#define ROBOT_B2_PRIO			11
+#define CONTROLLER_PRIO			22
 
 /*
 *********************************************************************************************************
@@ -34,8 +36,10 @@
 *********************************************************************************************************
 */
 
-OS_STK           prepRobotAStk[TASK_STK_SIZE];	//Stack of each task
-OS_STK           prepRobotBStk[TASK_STK_SIZE];
+OS_STK           prepRobotA1Stk[TASK_STK_SIZE];	
+OS_STK           prepRobotB1Stk[TASK_STK_SIZE];
+OS_STK           prepRobotA2Stk[TASK_STK_SIZE];
+OS_STK           prepRobotB2Stk[TASK_STK_SIZE];
 OS_STK           controllerStk[TASK_STK_SIZE];
 
 /*
@@ -44,10 +48,16 @@ OS_STK           controllerStk[TASK_STK_SIZE];
 *********************************************************************************************************
 */
 
-OS_EVENT* queue_controller_to_A;
-void     *commMsgControllerToA[10];
-OS_EVENT* queue_A_to_B;
-void     *commMsgAToB[10];
+OS_EVENT* queue_controller_to_A1;
+void     *commMsgControllerToA1[10];
+OS_EVENT* queue_A1_to_B1;
+void     *commMsgA1ToB1[10];
+
+OS_EVENT* queue_controller_to_A2;
+void     *commMsgControllerToA2[10];
+OS_EVENT* queue_A2_to_B2;
+void     *commMsgA2ToB2[10];
+
 OS_EVENT* mutex;
 
 volatile int total_item_count = 0;
@@ -79,21 +89,34 @@ typedef struct work_data {
 *                                                  MAIN
 *********************************************************************************************************
 */
-
+#define FIRST_SET "firstSet"
+#define SECOND_SET "secondSet"
 void main(void)
 {
 	UBYTE err = OS_NO_ERR;
 	OSInit();
-	queue_controller_to_A = OSQCreate(&commMsgControllerToA[0], 10);
-	queue_A_to_B = OSQCreate(&commMsgAToB[0], 10);
+
+	queue_controller_to_A1 = OSQCreate(&commMsgControllerToA1[0], 10);
+	queue_A1_to_B1 = OSQCreate(&commMsgA1ToB1[0], 10);
+
+	queue_controller_to_A2 = OSQCreate(&commMsgControllerToA2[0], 10);
+	queue_A2_to_B2 = OSQCreate(&commMsgA2ToB2[0], 10);
+
+
 	mutex = OSMutexCreate(7, &err);
+
+	char pdata1[20] = FIRST_SET;
+	char pdata2[20] = SECOND_SET;
 	errMsg(err, "Error");
 	err |= OSTaskCreate(&controller, (NULL), &controllerStk[TASK_STK_SIZE - 1], CONTROLLER_PRIO);
-	err |= OSTaskCreate(&robotA, (NULL), &prepRobotAStk[TASK_STK_SIZE - 1], ROBOT_A_PRIO);
-	err |= OSTaskCreate(&robotB, (NULL), &prepRobotBStk[TASK_STK_SIZE - 1], ROBOT_B_PRIO);
+	err |= OSTaskCreate(&robotA, (void*)&pdata1, &prepRobotA1Stk[TASK_STK_SIZE - 1], ROBOT_A1_PRIO);
+	err |= OSTaskCreate(&robotB, (void*)&pdata1, &prepRobotB1Stk[TASK_STK_SIZE - 1], ROBOT_B1_PRIO);
+	err |= OSTaskCreate(&robotA, (void*)&pdata2, &prepRobotA2Stk[TASK_STK_SIZE - 1], ROBOT_A2_PRIO);
+	err |= OSTaskCreate(&robotB, (void*)&pdata2, &prepRobotB2Stk[TASK_STK_SIZE - 1], ROBOT_B2_PRIO);
+	errMsg(err, "Error");
+
 	OSStart();
 
-	errMsg(err, "Error");
 
 	return;
 }
@@ -109,27 +132,41 @@ void robotA(void* data)
 	INT8U err;
 	int startTime = 0;
 	int orderNumber = 1;
-
+	char *set = (char*)data;
 	printf("ROBOT A @ %d : DEBUT.\n", OSTimeGet() - startTime);
 	int itemCountRobotA;
 	while (1)
 	{
-		work_data *data = (work_data*)OSQPend(queue_controller_to_A, 0, &err);
-		errMsg(err, "Error");
+		work_data *workData;
+		if (strcmp(set, FIRST_SET) == 0) {
+			workData = (work_data*)OSQPend(queue_controller_to_A1, 0, &err);
+			errMsg(err, "Error");
+			itemCountRobotA = workData->work_data_a;
+			err = OSQPost(queue_A1_to_B1, data);
+			errMsg(err, "Error");
 
-		itemCountRobotA = data->work_data_a;
+		}
+		else if (strcmp(set, SECOND_SET) == 0) {
+			workData = (work_data*)OSQPend(queue_controller_to_A2, 0, &err);
+			errMsg(err, "Error");
 
-		err = OSQPost(queue_A_to_B, data);
-		errMsg(err, "Error");
+			itemCountRobotA = workData->work_data_a;
+
+			err = OSQPost(queue_A2_to_B2, data);
+			errMsg(err, "Error");
+
+		}
+		else {
+			printf("ERROR: No valid set found.\n");
+			return;
+		}
 
 
 		OSMutexPend(mutex, 0, &err);
 		errMsg(err, "Error");
-		printf("mutex A IN ");
 		writeCurrentTotalItemCount(readCurrentTotalItemCount() + itemCountRobotA);
 		err = OSMutexPost(mutex);
 		errMsg(err, "Error");
-		printf("mutex A OUT ");
 
 
 		int counter = 0;
@@ -147,22 +184,35 @@ void robotB(void* data)
 	int orderNumber = 1;
 	printf("ROBOT B @ %d : DEBUT. \n", OSTimeGet() - startTime);
 	int itemCountRobotB;
+	char *set = (char*)data;
+	printf("set : %s", set);
 	while (1)
 	{
-		work_data *data = (work_data*)OSQPend(queue_A_to_B, 0, &err);
-		errMsg(err, "Error");
+		work_data *workData;
+		if (strcmp(set, FIRST_SET) == 0) {
+			workData = (work_data*)OSQPend(queue_A1_to_B1, 0, &err);
+			errMsg(err, "Error");
 
-		itemCountRobotB = data->work_data_b;
-		free(data);
+		}
+		else if (strcmp(set, SECOND_SET) == 0) {
+			workData = (work_data*)OSQPend(queue_A2_to_B2, 0, &err);
+			errMsg(err, "Error");
+	
+		}
+		else {
+			printf("ERROR: No valid set found.\n");
+			return;
+		}
+	
+
+		itemCountRobotB = workData->work_data_b;
 
 		OSMutexPend(mutex, 0, &err);
 		errMsg(err, "Error");
-		printf("mutex B IN ");
 
 		writeCurrentTotalItemCount(readCurrentTotalItemCount() + itemCountRobotB);
 		err = OSMutexPost(mutex);
 		errMsg(err, "Error");
-		printf("mutex B out ");
 
 
 		int counter = 0;
@@ -170,6 +220,8 @@ void robotB(void* data)
 		printf("ROBOT B COMMANDE #%d avec %d items @ %d.\n", orderNumber, itemCountRobotB, OSTimeGet() - startTime);
 
 		orderNumber++;
+		free(data);
+		
 	}
 }
 
@@ -186,18 +238,21 @@ void controller(void* data)
 	for (int i = 1; i < 11; i++)
 	{
 		//Création d'une commande
-		workData = malloc(sizeof(work_data*));
-		workData2 = malloc(sizeof(work_data*));
+		workData = malloc(sizeof(work_data));
+		workData2 = malloc(sizeof(work_data));
 
 		workData->work_data_a = (rand() % 8 + 3) * 10;
 		workData->work_data_b = (rand() % 8 + 6) * 10;
+		workData2->work_data_a = (rand() % 8 + 3) * 10;
+		workData2->work_data_b = (rand() % 8 + 6) * 10;
+
+
 
 		printf("TACHE CONTROLLER @ %d : COMMANDE #%d. \n prep time A = %d, prep time B = %d\n", OSTimeGet() - startTime, i, workData->work_data_a, workData->work_data_b);
 
 		// A completer
-		err = OSQPost(queue_controller_to_A, workData);
-		memcpy(workData2, workData, sizeof(work_data*));
-		err = OSQPost(queue_controller_to_A, workData2);
+		err = OSQPost(queue_controller_to_A1, workData);
+		err = OSQPost(queue_controller_to_A2, workData2);
 
 		errMsg(err, "Error");
 
