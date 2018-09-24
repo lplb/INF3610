@@ -142,7 +142,7 @@ void robotA(void* data)
 			workData = (work_data*)OSQPend(queue_controller_to_A1, 0, &err);
 			errMsg(err, "Error");
 			itemCountRobotA = workData->work_data_a;
-			err = OSQPost(queue_A1_to_B1, data);
+			err = OSQPost(queue_A1_to_B1, workData);
 			errMsg(err, "Error");
 
 		}
@@ -152,7 +152,7 @@ void robotA(void* data)
 
 			itemCountRobotA = workData->work_data_a;
 
-			err = OSQPost(queue_A2_to_B2, data);
+			err = OSQPost(queue_A2_to_B2, workData);
 			errMsg(err, "Error");
 
 		}
@@ -185,7 +185,6 @@ void robotB(void* data)
 	printf("ROBOT B @ %d : DEBUT. \n", OSTimeGet() - startTime);
 	int itemCountRobotB;
 	char *set = (char*)data;
-	printf("set : %s", set);
 	while (1)
 	{
 		work_data *workData;
@@ -220,7 +219,8 @@ void robotB(void* data)
 		printf("ROBOT B COMMANDE #%d avec %d items @ %d.\n", orderNumber, itemCountRobotB, OSTimeGet() - startTime);
 
 		orderNumber++;
-		free(data);
+
+		free(workData);
 		
 	}
 }
