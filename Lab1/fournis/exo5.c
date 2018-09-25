@@ -135,7 +135,8 @@ void robotA(void* data)
 	char *set = (char*)data;
 	printf("ROBOT A @ %d : DEBUT.\n", OSTimeGet() - startTime);
 	int itemCountRobotA;
-	while (1)
+	BOOLEAN finished = FALSE;
+	while (!finished)
 	{
 		work_data *workData;
 		if (strcmp(set, FIRST_SET) == 0) {
@@ -161,20 +162,25 @@ void robotA(void* data)
 			return;
 		}
 
+		if (workData->work_data_a == -1) {
+			finished = TRUE;
+		}
+		else {
+			OSMutexPend(mutex, 0, &err);
+			errMsg(err, "Error");
+			writeCurrentTotalItemCount(readCurrentTotalItemCount() + itemCountRobotA);
+			err = OSMutexPost(mutex);
+			errMsg(err, "Error");
 
-		OSMutexPend(mutex, 0, &err);
-		errMsg(err, "Error");
-		writeCurrentTotalItemCount(readCurrentTotalItemCount() + itemCountRobotA);
-		err = OSMutexPost(mutex);
-		errMsg(err, "Error");
 
+			int counter = 0;
+			while (counter < itemCountRobotA * 1000) { counter++; }
+			printf("ROBOT A COMMANDE #%d avec %d items @ %d.\n", orderNumber, itemCountRobotA, OSTimeGet() - startTime);
 
-		int counter = 0;
-		while (counter < itemCountRobotA * 1000) { counter++; }
-		printf("ROBOT A COMMANDE #%d avec %d items @ %d.\n", orderNumber, itemCountRobotA, OSTimeGet() - startTime);
-
-		orderNumber++;
+			orderNumber++;
+		}
 	}
+	printf("ROBOT A @ %d : FIN.\n", OSTimeGet() - startTime);
 }
 
 void robotB(void* data)
@@ -185,7 +191,8 @@ void robotB(void* data)
 	printf("ROBOT B @ %d : DEBUT. \n", OSTimeGet() - startTime);
 	int itemCountRobotB;
 	char *set = (char*)data;
-	while (1)
+	BOOLEAN finished = FALSE;
+	while (!finished)
 	{
 		work_data *workData;
 		if (strcmp(set, FIRST_SET) == 0) {
@@ -203,26 +210,31 @@ void robotB(void* data)
 			return;
 		}
 	
+		if (workData->work_data_b == -1) {
+			finished = TRUE;
+		}
+		else {
+			itemCountRobotB = workData->work_data_b;
 
-		itemCountRobotB = workData->work_data_b;
+			OSMutexPend(mutex, 0, &err);
+			errMsg(err, "Error");
 
-		OSMutexPend(mutex, 0, &err);
-		errMsg(err, "Error");
-
-		writeCurrentTotalItemCount(readCurrentTotalItemCount() + itemCountRobotB);
-		err = OSMutexPost(mutex);
-		errMsg(err, "Error");
+			writeCurrentTotalItemCount(readCurrentTotalItemCount() + itemCountRobotB);
+			err = OSMutexPost(mutex);
+			errMsg(err, "Error");
 
 
-		int counter = 0;
-		while (counter < itemCountRobotB * 1000) { counter++; }
-		printf("ROBOT B COMMANDE #%d avec %d items @ %d.\n", orderNumber, itemCountRobotB, OSTimeGet() - startTime);
+			int counter = 0;
+			while (counter < itemCountRobotB * 1000) { counter++; }
+			printf("ROBOT B COMMANDE #%d avec %d items @ %d.\n", orderNumber, itemCountRobotB, OSTimeGet() - startTime);
 
-		orderNumber++;
+			orderNumber++;
+		}
 
 		free(workData);
 		
 	}
+	printf("ROBOT B @ %d : FIN.\n", OSTimeGet() - startTime);
 }
 
 void controller(void* data)
@@ -260,6 +272,18 @@ void controller(void* data)
 		randomTime = (rand() % 9 + 5) * 4;
 		OSTimeDly(randomTime);
 	}
+	workData = malloc(sizeof(work_data));
+	workData2 = malloc(sizeof(work_data));
+
+	workData->work_data_a = -1;
+	workData->work_data_b = -1;
+	workData2->work_data_a = -1;
+	workData2->work_data_b = -1;
+
+	err = OSQPost(queue_controller_to_A1, workData);
+	err = OSQPost(queue_controller_to_A2, workData2);
+
+	errMsg(err, "Error");
 }
 
 int	readCurrentTotalItemCount()
