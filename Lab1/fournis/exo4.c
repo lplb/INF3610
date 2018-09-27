@@ -184,7 +184,6 @@ void controller(void* data)
 
 		printf("TACHE CONTROLLER @ %d : COMMANDE #%d. \n prep time A = %d, prep time B = %d\n", OSTimeGet() - startTime, i, workData->work_data_a, workData->work_data_b);
 		
-		// A completer
 		err = OSQPost(queue_controller_to_A, workData);
 		errMsg(err, "Error");
 

@@ -165,6 +165,7 @@ void robotA(void* data)
 		if (workData->work_data_a == -1) {
 			finished = TRUE;
 		}
+
 		else {
 			OSMutexPend(mutex, 0, &err);
 			errMsg(err, "Error");
@@ -180,6 +181,7 @@ void robotA(void* data)
 			orderNumber++;
 		}
 	}
+
 	printf("ROBOT A @ %d : FIN.\n", OSTimeGet() - startTime);
 }
 
@@ -192,6 +194,7 @@ void robotB(void* data)
 	int itemCountRobotB;
 	char *set = (char*)data;
 	BOOLEAN finished = FALSE;
+
 	while (!finished)
 	{
 		work_data *workData;
@@ -212,8 +215,7 @@ void robotB(void* data)
 	
 		if (workData->work_data_b == -1) {
 			finished = TRUE;
-		}
-		else {
+		} else {
 			itemCountRobotB = workData->work_data_b;
 
 			OSMutexPend(mutex, 0, &err);
@@ -262,7 +264,6 @@ void controller(void* data)
 
 		printf("TACHE CONTROLLER @ %d : COMMANDE #%d. \n prep time A = %d, prep time B = %d\n", OSTimeGet() - startTime, i, workData->work_data_a, workData->work_data_b);
 
-		// A completer
 		err = OSQPost(queue_controller_to_A1, workData);
 		err = OSQPost(queue_controller_to_A2, workData2);
 

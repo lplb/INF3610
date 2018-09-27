@@ -103,7 +103,6 @@ void robotA(void* data)
 		OSSemPend(sem_controller_to_robot_A, 0, &err);
 		errMsg(err, "Error while trying to access sem_controller_to_robot_A");
 
-		// A completer
 		writeCurrentTotalCount(readCurrentTotalCount() + itemCount);
 		err = OSSemPost(sem_robot_A_to_robot_B);
 		errMsg(err, "Error");
@@ -129,7 +128,6 @@ void robotB(void* data)
 	{
 		itemCount = (rand() % 6 + 2) * 10;
 		
-		// A completer
 		OSSemPend(sem_robot_A_to_robot_B, 0, &err);
 		errMsg(err, "Error");
 		writeCurrentTotalCount(readCurrentTotalCount() + itemCount);

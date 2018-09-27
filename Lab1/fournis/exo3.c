@@ -28,6 +28,8 @@
 #define ROBOT_B_PRIO   		9
 #define CONTROLLER_PRIO     7
 
+#define controller_A_event	0x01
+#define A_B_event			0x02
 /*
 *********************************************************************************************************
 *                                             VARIABLES
@@ -102,8 +104,7 @@ void robotA(void* data)
 	{
 		itemCount = (rand() % 7 + 1) * 10;
 
-		// A completer
-		OSFlagPend(flagGroup, 0x01, OS_FLAG_WAIT_SET_ALL, 0, &err);
+		OSFlagPend(flagGroup, controller_A_event, OS_FLAG_WAIT_SET_ALL, 0, &err);
 		errMsg(err, "Error");
 
 		OSMutexPend(mutexPendingCommands, 0, &err);
@@ -111,13 +112,13 @@ void robotA(void* data)
 		pending_commands--;
 		if (pending_commands == 0) 
 		{
-			OSFlagPost(flagGroup, 0x01, OS_FLAG_CLR, &err);
+			OSFlagPost(flagGroup, controller_A_event, OS_FLAG_CLR, &err);
 			errMsg(err, "Error");
 		}
 		err = OSMutexPost(mutexPendingCommands);
 		errMsg(err, "Error");
 
-		OSFlagPost(flagGroup, 0x02, OS_FLAG_SET, &err);
+		OSFlagPost(flagGroup, A_B_event, OS_FLAG_SET, &err);
 		errMsg(err, "Error");
 		OSMutexPend(mutexItemCount, 0, &err);
 		errMsg(err, "Error");
@@ -144,10 +145,9 @@ void robotB(void* data)
 	{
 		itemCount = (rand() % 6 + 2) * 10;
 
-		// A completer
-		OSFlagPend(flagGroup, 0x02, OS_FLAG_WAIT_SET_ALL, 0, &err);
+		OSFlagPend(flagGroup, A_B_event, OS_FLAG_WAIT_SET_ALL, 0, &err);
 		errMsg(err, "Error");
-		OSFlagPost(flagGroup, 0x02, OS_FLAG_CLR, &err);
+		OSFlagPost(flagGroup, A_B_event, OS_FLAG_CLR, &err);
 		errMsg(err, "Error");
 		OSMutexPend(mutexItemCount, 0, &err);
 		errMsg(err, "Error");
@@ -182,10 +182,9 @@ void controller(void* data)
 		err = OSMutexPost(mutexPendingCommands);
 		errMsg(err, "Error");
 
-		OSFlagPost(flagGroup, 0x01, OS_FLAG_SET, &err);
+		OSFlagPost(flagGroup, controller_A_event, OS_FLAG_SET, &err);
 		errMsg(err, "Error");
 
-		// A completer
 	}
 }
 
