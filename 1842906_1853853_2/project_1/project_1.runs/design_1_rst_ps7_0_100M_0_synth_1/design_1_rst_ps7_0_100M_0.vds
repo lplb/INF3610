@@ -1,0 +1,14 @@
+#-----------------------------------------------------------
+# Vivado v2018.1 (64-bit)
+# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018
+# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018
+# Start of session at: Fri Sep 28 09:12:21 2018
+# Process ID: 14516
+# Current directory: C:/TEMP/3610/1842906_1853853/project_1/project_1.runs/design_1_rst_ps7_0_100M_0_synth_1
+# Command line: vivado.exe -log design_1_rst_ps7_0_100M_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source design_1_rst_ps7_0_100M_0.tcl
+# Log file: C:/TEMP/3610/1842906_1853853/project_1/project_1.runs/design_1_rst_ps7_0_100M_0_synth_1/design_1_rst_ps7_0_100M_0.vds
+# Journal file: C:/TEMP/3610/1842906_1853853/project_1/project_1.runs/design_1_rst_ps7_0_100M_0_synth_1\vivado.jou
+#-----------------------------------------------------------
+source design_1_rst_ps7_0_100M_0.tcl -notrace
+INFO: [IP_Flow 19-4838] Using cached IP synthesis design for IP design_1_rst_ps7_0_100M_0, cache-ID = 2efe541a27a6b589.
+INFO: [Common 17-206] Exiting Vivado at Fri Sep 28 09:12:30 2018...

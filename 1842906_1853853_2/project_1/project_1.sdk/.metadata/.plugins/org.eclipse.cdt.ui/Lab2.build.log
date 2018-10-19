@@ -1,0 +1,27 @@
+11:22:42 **** Auto Build of configuration Debug for project Lab2 ****
+make pre-build main-build 
+a9-linaro-pre-build-step
+' '
+'Building file: ../src/simAvion.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -I../src/ucos -c -fmessage-length=0 -MT"src/simAvion.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../standalone_bsp_0/ps7_cortexa9_0/include -MMD -MP -MF"src/simAvion.d" -MT"src/simAvion.o" -o "src/simAvion.o" "../src/simAvion.c"
+../src/simAvion.c: In function 'decollage':
+../src/simAvion.c:285:9: warning: variable 'avion' set but not used [-Wunused-but-set-variable]
+  Avion* avion = NULL;
+         ^~~~~
+../src/simAvion.c: In function 'statistiques':
+../src/simAvion.c:337:12: warning: unused variable 'flags' [-Wunused-variable]
+   OS_FLAGS flags = OSFlagPendGetFlagsRdy();
+            ^~~~~
+../src/simAvion.c: At top level:
+../src/simAvion.c:381:6: error: conflicting types for 'safePrint'
+ void safePrint(char* msg, ...) {
+      ^~~~~~~~~
+In file included from ../src/simAvion.c:18:0:
+../src/simAvion.h:141:7: note: previous declaration of 'safePrint' was here
+ void  safePrint(char* msg);
+       ^~~~~~~~~
+make: *** [src/simAvion.o] Erreur 1
+
+11:22:43 Build Finished (took 883ms)
+
