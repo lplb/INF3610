@@ -2,25 +2,28 @@
 # Vivado v2018.1 (64-bit)
 # SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018
 # IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018
-# Start of session at: Fri Oct 19 08:15:56 2018
-# Process ID: 14220
-# Current directory: C:/TEMP/3610/1842906_1853853/project_1
-# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent13256 C:\TEMP\3610\1842906_1853853\project_1\project_1.xpr
-# Log file: C:/TEMP/3610/1842906_1853853/project_1/vivado.log
-# Journal file: C:/TEMP/3610/1842906_1853853/project_1\vivado.jou
+# Start of session at: Wed Oct 24 17:36:19 2018
+# Process ID: 18212
+# Current directory: C:/TEMP/1842906_1853853_2/project_1
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent22352 C:\TEMP\1842906_1853853_2\project_1\project_1.xpr
+# Log file: C:/TEMP/1842906_1853853_2/project_1/vivado.log
+# Journal file: C:/TEMP/1842906_1853853_2/project_1\vivado.jou
 #-----------------------------------------------------------
 start_gui
-open_project C:/TEMP/3610/1842906_1853853/project_1/project_1.xpr
+open_project C:/TEMP/1842906_1853853_2/project_1/project_1.xpr
+INFO: [Project 1-313] Project file moved from 'C:/TEMP/3610/1842906_1853853/project_1' since last save.
 Scanning sources...
 Finished scanning sources
 INFO: [IP_Flow 19-234] Refreshing IP repositories
 INFO: [IP_Flow 19-1704] No user IP repositories specified
 INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'C:/Logiciels/Xilinx/Vivado/2018.1/data/ip'.
-open_project: Time (s): cpu = 00:00:23 ; elapsed = 00:00:26 . Memory (MB): peak = 843.953 ; gain = 142.164
+open_project: Time (s): cpu = 00:00:20 ; elapsed = 00:00:20 . Memory (MB): peak = 847.719 ; gain = 160.602
 update_compile_order -fileset sources_1
-launch_sdk -workspace C:/TEMP/3610/1842906_1853853/project_1/project_1.sdk -hwspec C:/TEMP/3610/1842906_1853853/project_1/project_1.sdk/design_1_wrapper.hdf
+launch_sdk -workspace C:/TEMP/1842906_1853853_2/project_1/project_1.sdk -hwspec C:/TEMP/1842906_1853853_2/project_1/project_1.sdk/design_1_wrapper.hdf
 INFO: [Vivado 12-393] Launching SDK...
-INFO: [Vivado 12-417] Running xsdk -workspace C:/TEMP/3610/1842906_1853853/project_1/project_1.sdk -hwspec C:/TEMP/3610/1842906_1853853/project_1/project_1.sdk/design_1_wrapper.hdf
+INFO: [Vivado 12-417] Running xsdk -workspace C:/TEMP/1842906_1853853_2/project_1/project_1.sdk -hwspec C:/TEMP/1842906_1853853_2/project_1/project_1.sdk/design_1_wrapper.hdf
 INFO: [Vivado 12-3157] SDK launch initiated. Please check console for any further messages.
-exit
-INFO: [Common 17-206] Exiting Vivado at Fri Oct 19 11:23:17 2018...
+launch_sdk -workspace C:/TEMP/1842906_1853853_2/project_1/project_1.sdk -hwspec C:/TEMP/1842906_1853853_2/project_1/project_1.sdk/design_1_wrapper.hdf
+INFO: [Vivado 12-393] Launching SDK...
+INFO: [Vivado 12-417] Running xsdk -workspace C:/TEMP/1842906_1853853_2/project_1/project_1.sdk -hwspec C:/TEMP/1842906_1853853_2/project_1/project_1.sdk/design_1_wrapper.hdf
+INFO: [Vivado 12-3157] SDK launch initiated. Please check console for any further messages.

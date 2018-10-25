@@ -36,7 +36,6 @@ void timer_isr(void* not_valid) {
 
 void fit_timer_1s_isr(void *not_valid) {
 	/*TODO: definition handler pour timer 1s*/
-	xil_printf("1 seconde \n");
 	uint8_t err;
 	err = OSSemPost(semGeneration);
 	errMsg(err, "ERROR: Sem generation");
@@ -44,7 +43,6 @@ void fit_timer_1s_isr(void *not_valid) {
 
 void fit_timer_3s_isr(void *not_valid) {
 	/*TODO: definition handler pour timer 3s*/
-	xil_printf("3 seconde \n");
 	uint8_t err;
 	err = OSSemPost(semVerification);
 	errMsg(err, "ERROR: Sem verification");
@@ -53,9 +51,8 @@ void fit_timer_3s_isr(void *not_valid) {
 
 void gpio_isr(void * not_valid) {
 	/*TODO: definition handler pour switches*/
-	XIntc_Acknowledge(&axi_intc, GPIO_SW_IRQ_ID);
+//	XIntc_Acknowledge(&axi_intc, GPIO_SW_IRQ_ID);
 	XGpio_InterruptClear(&gpSwitch, XGPIO_IR_MASK);
-	xil_printf("gpio  \n");
 
 	uint8_t err;
 	err = OSSemPost(semStats);
@@ -69,8 +66,7 @@ void gpio_isr(void * not_valid) {
 *********************************************************************************************************
 */
 
-int main(void)
-{
+int main(void) {
 	initialize_bsp();
 
 	OSInit(); 
@@ -79,7 +75,7 @@ int main(void)
 
 	prepare_and_enable_irq();
 
-	xil_printf("*** Starting uC/OS-II scheduler ***\n");
+	safePrint("*** Starting uC/OS-II scheduler ***\n", NULL);
 
 	stopSimDebordement = false;
 
@@ -96,12 +92,10 @@ void create_application() {
 	int error;
 
 	error = create_tasks();
-	if (error != 0)
-		xil_printf("Error %d while creating tasks\n", error);
+	errMsg(error, "Error %d while creating tasks\n");
 
 	error = create_events();
-	if (error != 0)
-		xil_printf("Error %d while creating events\n", error);
+	errMsg(error, "Error %d while creating events\n");
 }
 
 int create_tasks() {
@@ -117,13 +111,15 @@ int create_tasks() {
 	uint8_t err = OS_ERR_NONE;
 
 	/*TODO: Creation des taches*/
-	int numTerminal0 = 0;
-	int numTerminal1 = 1;
+	int *numTerminal0 = safeMalloc(sizeof(int));
+	*numTerminal0 = 0;
+	int *numTerminal1 = safeMalloc(sizeof(int));
+	*numTerminal1 = 1;
 
 	err |= OSTaskCreate(&generation, NULL, &generationStk[TASK_STK_SIZE - 1], GENERATION_PRIO);
 	err |= OSTaskCreate(&atterrissage, NULL, &atterrissage0Stk[TASK_STK_SIZE - 1], ATTERRISSAGE_PRIO);
-	err |= OSTaskCreate(&terminal, &numTerminal0, &terminal0Stk[TASK_STK_SIZE - 1], TERMINAL0_PRIO);
-	err |= OSTaskCreate(&terminal, &numTerminal1, &terminal1Stk[TASK_STK_SIZE - 1], TERMINAL1_PRIO);
+	err |= OSTaskCreate(&terminal, numTerminal0, &terminal0Stk[TASK_STK_SIZE - 1], TERMINAL0_PRIO);
+	err |= OSTaskCreate(&terminal, numTerminal1, &terminal1Stk[TASK_STK_SIZE - 1], TERMINAL1_PRIO);
 	err |= OSTaskCreate(&decollage, NULL, &decollageStk[TASK_STK_SIZE - 1], DECOLLAGE_PRIO);
 	err |= OSTaskCreate(&statistiques, NULL, &statistiquesStk[TASK_STK_SIZE - 1], STATISTIQUES_PRIO);
 	err |= OSTaskCreate(&verification, NULL, &verificationStk[TASK_STK_SIZE - 1], VERIFICATION_PRIO);
@@ -144,13 +140,18 @@ int create_events() {
 	mboxTerm0 = OSMboxCreate(NULL);
 	mboxTerm1 = OSMboxCreate(NULL);
 
-	Q_atterrissage_high = OSQCreate(&Q_atterrissage_high_data[0], sizeof(Q_atterrissage_high_data));
-	Q_atterrissage_medium = OSQCreate(&Q_atterrissage_medium_data[0], sizeof(Q_atterrissage_medium_data));
-	Q_atterrissage_low =  OSQCreate(&Q_atterrissage_low_data[0], sizeof(Q_atterrissage_low_data));
+	Q_atterrissage_high = OSQCreate(&Q_atterrissage_high_data[0], 3);
+	Q_atterrissage_medium = OSQCreate(&Q_atterrissage_medium_data[0], 4);
+	Q_atterrissage_low =  OSQCreate(&Q_atterrissage_low_data[0], 6);
 
-	Q_decollage = OSQCreate(&Q_decollage_data[0], sizeof(Q_decollage_data));
+	Q_decollage = OSQCreate(&Q_decollage_data[0], 10);
 
-	flagTerminaux = OSFlagCreate(0, &err);
+	flagTerminaux = OSFlagCreate(FLAG_TERMINAL0 | FLAG_TERMINAL1, &err);
+
+	mutMemory = OSMutexCreate(MUT_MEMORY_PRIO, &err);
+	mutPrintf = OSMutexCreate(MUT_PRINTF_PRIO, &err);
+	mutDebordement = OSMutexCreate(MUT_DEBORDEMENT_PRIO, &err);
+
 	errMsg(err, "ERROR: Create events");
 
 	return 0;
@@ -164,7 +165,7 @@ int create_events() {
 void generation(void* data) {
 	uint8_t err;
 	int nbAvionsCrees = 0;
-	xil_printf("[GENERATION] Tache lancee\n");
+	safePrint("[GENERATION] Tache lancee\n", NULL);
 	int skipGen = 0;
 	int seed = 42;
 	while (1) {
@@ -175,20 +176,29 @@ void generation(void* data) {
 		srand(seed);
 		skipGen = rand() % 5; //On saute la generation 1 fois sur 5
 		if (skipGen != 0){
-			Avion* avion = malloc(sizeof(Avion));
+			Avion* avion = safeMalloc(sizeof(Avion));
 			avion->id = nbAvionsCrees;
 			remplirAvion(avion);
 			nbAvionsCrees++;
 
 			/*TODO: Envoi des avions dans les files appropriees*/
 			int retard = avion->retard;
+			safePrint("[GENERATION] Avion genere avec retard de %d min\n", retard);
 			if (retard <= BORNE_SUP_LOW) {
-				err |= OSQPost(Q_atterrissage_low, avion);
+				err = OSQPost(Q_atterrissage_low, (void*)avion);
 			} else if (retard <= BORNE_SUP_MEDIUM) {
-				err |= OSQPost(Q_atterrissage_medium, avion);
+				err = OSQPost(Q_atterrissage_medium, (void*)avion);
 			} else if (retard <= BORNE_SUP_HIGH) {
-				err |= OSQPost(Q_atterrissage_high, avion);
+				err = OSQPost(Q_atterrissage_high, (void*)avion);
 			}
+			if (err == OS_ERR_Q_FULL) {
+				stopSimDebordement = true;
+				safePrint("%s", "[GENERATION] File pleine\n");
+			} else {
+				errMsg(err, "ERROR: QPost generation");
+			}
+
+
 		}
 		else{
 			/*xil_printf("[GENERATION] Pas de generation\n");*/
@@ -201,25 +211,26 @@ void atterrissage(void* data)
 {
 	uint8_t err;
 	Avion* avion = NULL;
-	xil_printf("[ATTERRISSAGE] Tache lancee\n");
+	safePrint("[ATTERRISSAGE] Tache lancee\n", NULL);
 	while (1) {
 		/*TODO: Mise en attente des 3 files en fonction de leur priorité*/
 		avion = NULL;
 		do {
-			avion = (Avion*)OSQAccept(Q_atterrissage_high, &err);
+			avion = (Avion*)OSQPend(Q_atterrissage_high, 100, &err);
 			if (avion == NULL) {
-				avion = (Avion*)OSQAccept(Q_atterrissage_medium, &err);
-				if (avion == NULL)
-					avion = (Avion*)OSQAccept(Q_atterrissage_low, &err);
+				avion = (Avion*)OSQPend(Q_atterrissage_medium, 100, &err);
+				if (avion == NULL) {
+					avion = (Avion*)OSQPend(Q_atterrissage_low, 100, &err);
+				}
 			}
-			errMsg(err, "ERROR: OS QUEUE ACCEPT ATTERRISSAGE");
 
 		} while (avion == NULL);
+		errMsg(err, "ERROR: OS QUEUE ACCEPT ATTERRISSAGE");
 
-		xil_printf("[ATTERRISSAGE] Debut atterrissage\n");
+		safePrint("[ATTERRISSAGE] Debut atterrissage\n", NULL);
 		OSTimeDly(150); //Temps pour que l'avion atterrisse
 
-		xil_printf("[ATTERRISSAGE] Attente terminal libre\n");
+		safePrint("[ATTERRISSAGE] Attente terminal libre\n", NULL);
 		/*TODO: Mise en attente d'un terminal libre (mecanisme a votre choix)*/
 		OSFlagPend(flagTerminaux, 0x03, OS_FLAG_WAIT_SET_ANY, 0, &err);
 		errMsg(err, "ERROR: flagpend atterissage");
@@ -229,15 +240,17 @@ void atterrissage(void* data)
 
 
 
-		//xil_printf("[ATTERRISSAGE] Terminal libre num %d obtenu\n", ...);
+		safePrint("[ATTERRISSAGE] Terminal libre num %d obtenu\n", termNumber);
 
 		/*TODO: Envoi de l'avion au terminal choisi (mecanisme de votre choix)*/
 		if (termNumber == 0) {
 			OSFlagPost(flagTerminaux, FLAG_TERMINAL0, OS_FLAG_CLR, &err);
-			err |= OSMboxPost(mboxTerm0, avion);
+			errMsg(err, "ERROR: Flag post error");
+			err = OSMboxPost(mboxTerm0, avion);
 		} else {
 			OSFlagPost(flagTerminaux, FLAG_TERMINAL1, OS_FLAG_CLR, &err);
-			err |= OSMboxPost(mboxTerm1, avion);
+			errMsg(err, "ERROR: Flag post error");
+			err = OSMboxPost(mboxTerm1, avion);
 		}
 
 		errMsg(err, "ERROR: Mbox post error");
@@ -249,7 +262,7 @@ void terminal(void* data)
 	uint8_t err;
 	int numTerminal = *((int*)data); //TODO: A modifier
 	Avion* avion = NULL;
-	xil_printf("[TERMINAL %d] Tache lancee\n", numTerminal);
+	safePrint("[TERMINAL %d] Tache lancee\n", numTerminal);
 
 	while (1) {
 
@@ -260,7 +273,7 @@ void terminal(void* data)
 			avion = (Avion*)OSMboxPend(mboxTerm1, 0, &err);
 		}
 		errMsg(err, "ERROR: Os mbox pend terminal");
-		xil_printf("[TERMINAL %d] Obtention avion\n", numTerminal);
+		safePrint("[TERMINAL %d] Obtention avion\n", numTerminal);
 
 		OSTimeDly(160);//Attente pour le vidage, le nettoyage et le remplissage de l'avion
 
@@ -268,8 +281,13 @@ void terminal(void* data)
 
 		/*TODO: Envoi de l'avion pour le piste de decollage*/
 		err = OSQPost(Q_decollage, avion);
-		errMsg(err, "ERROR: OSQ post error decollage");
-		xil_printf("[TERMINAL %d] Liberation avion\n", numTerminal);
+		if (err == OS_ERR_Q_FULL) {
+			stopSimDebordement = true;
+			safePrint("[TERMINAL %d] File de decollage pleine\n", numTerminal);
+		} else {
+			errMsg(err, "ERROR: OSQ post error decollage");
+			safePrint("[TERMINAL %d] Liberation avion\n", numTerminal);
+		}
 
 		/*TODO: Notifier que le terminal est libre (mecanisme de votre choix)*/
 		uint8_t flagTerm = numTerminal == 0 ? FLAG_TERMINAL0 : FLAG_TERMINAL1;
@@ -283,7 +301,7 @@ void decollage(void* data)
 {
 	uint8_t err;
 	Avion* avion = NULL;
-	xil_printf("[DECOLLAGE] Tache lancee\n");
+	safePrint("[DECOLLAGE] Tache lancee\n", NULL);
 
 	while (1) {
 		/*TODO: Mise en attente d'un avion pret pour le decollage*/
@@ -291,24 +309,22 @@ void decollage(void* data)
 		errMsg(err, "ERROR: OSQPend Q_decollage");
 
 		OSTimeDly(30); //Temps pour que l'avion decolle
-		xil_printf("[DECOLLAGE] Avion decolle\n");
+		safePrint("[DECOLLAGE] Avion decolle\n", NULL);
 
 		/*TODO: Destruction de l'avion*/
-
-
-
+		safeFree(avion);
 	}
 }
 
 
 void statistiques(void* data){
 	uint8_t err;
-	xil_printf("[STATISTIQUES] Tache lancee\n");
+	safePrint("[STATISTIQUES] Tache lancee\n", NULL);
 	while(1){
 		/*TODO: Synchronisation unilaterale switches*/
 		OSSemPend(semStats, 0, &err);
 		errMsg(err, "ERROR: sem pend stats");
-		xil_printf("\n------------------ Affichage des statistiques ------------------\n");
+		safePrint("\n------------------ Affichage des statistiques ------------------\n", NULL);
 
 		/*TODO: Obtenir statistiques pour les files d'atterrissage*/
 		OS_Q_DATA dataHigh 	= {0};
@@ -318,9 +334,9 @@ void statistiques(void* data){
 		err |= OSQQuery(Q_atterrissage_medium, &dataMed);
 		err |= OSQQuery(Q_atterrissage_low, &dataLow);
 
-		/*xil_printf("Nb d'avions en attente d'atterrissage de type High : %d\n", ...);
-		xil_printf("Nb d'avions en attente d'atterrissage de type Medium : %d\n", ...);
-		xil_printf("Nb d'avions en attente d'atterrissage de type Low : %d\n", ...);*/
+		safePrint("Nb d'avions en attente d'atterrissage de type High : %d\n", dataHigh.OSNMsgs);
+		safePrint("Nb d'avions en attente d'atterrissage de type Medium : %d\n", dataMed.OSNMsgs);
+		safePrint("Nb d'avions en attente d'atterrissage de type Low : %d\n", dataLow.OSNMsgs);
 
 		/*TODO: Obtenir statistiques pour la file de decollage*/
 		OS_Q_DATA dataDecollage = {0};
@@ -328,7 +344,7 @@ void statistiques(void* data){
 		err |= OSQQuery(Q_decollage, &dataDecollage);
 
 
-		//xil_printf("Nb d'avions en attente de decollage : %d\n", ...);
+		safePrint("Nb d'avions en attente de decollage : %d\n", dataDecollage.OSNMsgs);
 
 
 
@@ -336,20 +352,19 @@ void statistiques(void* data){
 
 		OS_FLAGS flags = OSFlagPendGetFlagsRdy();
 
+		safePrint("Terminal 0 ", NULL);
+		int statutTerm0 = (flags & FLAG_TERMINAL0) == FLAG_TERMINAL0; /*A modifier (simplement un exemple d'affichage pour vous aider)*/
+		(statutTerm0 == 0) ? safePrint("OCCUPE\n", NULL) : safePrint("LIBRE\n", NULL);
 
-		xil_printf("Terminal 0 ");
-		int statutTerm0 = 0; /*A modifier (simplement un exemple d'affichage pour vous aider)*/
-		(statutTerm0 == 0) ? xil_printf("OCCUPE\n") : xil_printf("LIBRE\n");
-
-		xil_printf("Terminal 1 ");
-		int statutTerm1 = 0; /*A modifier (simplement un exemple d'affichage pour vous aider)*/
-		(statutTerm1 == 0) ? xil_printf("OCCUPE\n") : xil_printf("LIBRE\n");
+		safePrint("Terminal 1 ", NULL);
+		int statutTerm1 = (flags & FLAG_TERMINAL1) == FLAG_TERMINAL1; /*A modifier (simplement un exemple d'affichage pour vous aider)*/
+		(statutTerm1 == 0) ? safePrint("%s","OCCUPE\n") : safePrint("LIBRE\n", NULL);
 	}
 }
 
 void verification(void* data){
 	uint8_t err;
-	xil_printf("[VERIFICATION] Tache lancee\n");
+	safePrint("[VERIFICATION] Tache lancee\n", NULL);
 	while(1){
 		/*TODO: Synchronisation unilaterale avec timer 3s*/
 		OSSemPend(semVerification, 0, &err);
@@ -357,6 +372,7 @@ void verification(void* data){
 
 		if (stopSimDebordement){
 			/*TODO: Suspension de toutes les taches de la simulation*/
+			safePrint("[VERIFICATION] Fin de la simulation\n", NULL);
 			err |= OSTaskSuspend(GENERATION_PRIO);
 			err |= OSTaskSuspend(ATTERRISSAGE_PRIO);
 			err |= OSTaskSuspend(TERMINAL0_PRIO);
@@ -378,15 +394,35 @@ void remplirAvion(Avion* avion) {
 	xil_printf("Avion destination = %d\n", avion->destination);*/
 }
 
-void safePrint(char* msg, ...) {
+void* safeMalloc(size_t size) {
+	void* ret;
+	uint8_t err;
+	OSMutexPend(mutMemory, 0, &err);
+	ret = malloc(size);
+	err = OSMutexPost(mutMemory);
+	return ret;
+}
 
+void safeFree(void* data) {
+	uint8_t err;
+	OSMutexPend(mutMemory, 0, &err);
+	free(data);
+	err = OSMutexPost(mutMemory);
+}
+
+void safePrint(const char* msg, void* arg) {
+	uint8_t err;
+	OSMutexPend(mutPrintf, 0, &err);
+	xil_printf(msg, arg);
+	err = OSMutexPost(mutPrintf);
 }
 
 void errMsg(uint8_t err, char* errMsg)
 {
 	if (err != OS_ERR_NONE)
 	{
-		xil_printf(errMsg);
+		safePrint("%d: ", err);
+		safePrint("%s\n", errMsg);
 		exit(1);
 	}
 }
