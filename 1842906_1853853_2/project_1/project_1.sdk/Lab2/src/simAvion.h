@@ -68,7 +68,6 @@ void *Q_decollage_data[10];
 *********************************************************************************************************
 */
 
-/*TODO: Declaration des mailbox (si necessaire)*/
 
 OS_EVENT* mboxTerm0;
 OS_EVENT* mboxTerm1;
@@ -80,7 +79,6 @@ OS_EVENT* mboxTerm1;
 *********************************************************************************************************
 */
 
-/*TODO: Declaration des flags (si necessaire)*/
 
 OS_FLAG_GRP* flagTerminaux;
 
@@ -90,7 +88,6 @@ OS_FLAG_GRP* flagTerminaux;
 *********************************************************************************************************
 */
 
-/*TODO: Declaration des semaphores (si necessaire)*/
 OS_EVENT* semGeneration;
 OS_EVENT* semStats;
 OS_EVENT* semVerification;
@@ -102,7 +99,6 @@ OS_EVENT* semVerification;
 *********************************************************************************************************
 */
 
-/*TODO: Declaration des mutex (si necessaire)*/
 OS_EVENT* mutMemory;
 OS_EVENT* mutPrintf;
 OS_EVENT* mutDebordement;

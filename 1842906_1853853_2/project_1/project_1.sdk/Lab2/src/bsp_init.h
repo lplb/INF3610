@@ -38,14 +38,12 @@ int initialize_bsp();
 		int connect_irqs();
 			int connect_intc_irq();
 			int connect_timer_irq();
-			/* TODO: Rajoutez vos fonctions de connexion ici*/
 			int connect_fit_timer_1s_irq();
 			int connect_fit_timer_3s_irq();
 			int connect_gpio_irq();
 void cleanup();
 	void disconnect_timer_irq();
 	void disconnect_intc_irq();
-	/* TODO: Rajoutez vos fonctions de déconnexion ici */
 	void disconnect_fit_timer_1s_irq();
 	void disconnect_fit_timer_3s_irq();
 	void disconnect_gpio_irq();

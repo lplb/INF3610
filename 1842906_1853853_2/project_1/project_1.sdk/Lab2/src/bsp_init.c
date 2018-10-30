@@ -38,7 +38,6 @@ void initialize_timer() {
 
 void initialize_gpio()
 {
-	/*TODO: Initialisation du GPIO*/
 	XGpio_Initialize(&gpSwitch, GPIO_SW_DEVICE_ID);
 	XGpio_InterruptGlobalEnable(&gpSwitch);
 	XGpio_InterruptEnable(&gpSwitch, XGPIO_IR_MASK);
@@ -149,7 +148,6 @@ int connect_irqs() {
 	if (status != XST_SUCCESS)
 		return XST_FAILURE;
 
-	/*TODO: Appel de vos fonctions de connexion */
 	status = connect_fit_timer_1s_irq();
 	if (status != XST_SUCCESS)
 		return XST_FAILURE;
@@ -208,7 +206,6 @@ int connect_timer_irq() {
 	return XST_SUCCESS;
 }
 
-/*TODO: Implementation de vos fonctions de connexion*/
 
 int connect_fit_timer_1s_irq() {
 	int status;
@@ -279,7 +276,6 @@ void cleanup() {
 	disconnect_fit_timer_1s_irq();
 	disconnect_fit_timer_3s_irq();
 	disconnect_gpio_irq();
-	/*TODO: Appel de vos fonctions de déconnexion */
 }
 
 void disconnect_timer_irq() {
@@ -292,7 +288,6 @@ void disconnect_intc_irq() {
 	XScuGic_Disconnect(&gic, PL_INTC_IRQ_ID);
 }
 
-/*TODO: Implementation de vos fonctions de deconnexion*/
 void disconnect_fit_timer_1s_irq() {
 	XIntc_Disable(&axi_intc, FIT_1S_IRQ_ID);
 	XIntc_Disconnect(&axi_intc, FIT_1S_IRQ_ID);
