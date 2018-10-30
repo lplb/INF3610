@@ -75,7 +75,7 @@ int main(void) {
 
 	prepare_and_enable_irq();
 
-	safePrint("*** Starting uC/OS-II scheduler ***\n", NULL);
+	safePrint("%s", "*** Starting uC/OS-II scheduler ***\n");
 
 	stopSimDebordement = false;
 
@@ -165,7 +165,7 @@ int create_events() {
 void generation(void* data) {
 	uint8_t err;
 	int nbAvionsCrees = 0;
-	safePrint("[GENERATION] Tache lancee\n", NULL);
+	safePrint("%s", "[GENERATION] Tache lancee\n");
 	int skipGen = 0;
 	int seed = 42;
 	while (1) {
@@ -201,7 +201,7 @@ void generation(void* data) {
 
 		}
 		else{
-			/*xil_printf("[GENERATION] Pas de generation\n");*/
+			safePrint("%s", "[GENERATION] Pas de generation\n");
 		}
 		seed++;
 	}
@@ -211,7 +211,7 @@ void atterrissage(void* data)
 {
 	uint8_t err;
 	Avion* avion = NULL;
-	safePrint("[ATTERRISSAGE] Tache lancee\n", NULL);
+	safePrint("%s", "[ATTERRISSAGE] Tache lancee\n");
 	while (1) {
 		/*TODO: Mise en attente des 3 files en fonction de leur priorité*/
 		avion = NULL;
@@ -227,10 +227,10 @@ void atterrissage(void* data)
 		} while (avion == NULL);
 		errMsg(err, "ERROR: OS QUEUE ACCEPT ATTERRISSAGE");
 
-		safePrint("[ATTERRISSAGE] Debut atterrissage\n", NULL);
+		safePrint("%s", "[ATTERRISSAGE] Debut atterrissage\n");
 		OSTimeDly(150); //Temps pour que l'avion atterrisse
 
-		safePrint("[ATTERRISSAGE] Attente terminal libre\n", NULL);
+		safePrint("%s", "[ATTERRISSAGE] Attente terminal libre\n");
 		/*TODO: Mise en attente d'un terminal libre (mecanisme a votre choix)*/
 		OSFlagPend(flagTerminaux, 0x03, OS_FLAG_WAIT_SET_ANY, 0, &err);
 		errMsg(err, "ERROR: flagpend atterissage");
@@ -261,6 +261,7 @@ void terminal(void* data)
 {
 	uint8_t err;
 	int numTerminal = *((int*)data); //TODO: A modifier
+	safeFree(data);
 	Avion* avion = NULL;
 	safePrint("[TERMINAL %d] Tache lancee\n", numTerminal);
 
@@ -301,7 +302,7 @@ void decollage(void* data)
 {
 	uint8_t err;
 	Avion* avion = NULL;
-	safePrint("[DECOLLAGE] Tache lancee\n", NULL);
+	safePrint("%s", "[DECOLLAGE] Tache lancee\n");
 
 	while (1) {
 		/*TODO: Mise en attente d'un avion pret pour le decollage*/
@@ -309,7 +310,7 @@ void decollage(void* data)
 		errMsg(err, "ERROR: OSQPend Q_decollage");
 
 		OSTimeDly(30); //Temps pour que l'avion decolle
-		safePrint("[DECOLLAGE] Avion decolle\n", NULL);
+		safePrint("%s", "[DECOLLAGE] Avion decolle\n");
 
 		/*TODO: Destruction de l'avion*/
 		safeFree(avion);
@@ -319,12 +320,12 @@ void decollage(void* data)
 
 void statistiques(void* data){
 	uint8_t err;
-	safePrint("[STATISTIQUES] Tache lancee\n", NULL);
+	safePrint("%s", "[STATISTIQUES] Tache lancee\n");
 	while(1){
 		/*TODO: Synchronisation unilaterale switches*/
 		OSSemPend(semStats, 0, &err);
 		errMsg(err, "ERROR: sem pend stats");
-		safePrint("\n------------------ Affichage des statistiques ------------------\n", NULL);
+		safePrint("%s", "\n------------------ Affichage des statistiques ------------------\n");
 
 		/*TODO: Obtenir statistiques pour les files d'atterrissage*/
 		OS_Q_DATA dataHigh 	= {0};
@@ -352,19 +353,19 @@ void statistiques(void* data){
 
 		OS_FLAGS flags = OSFlagPendGetFlagsRdy();
 
-		safePrint("Terminal 0 ", NULL);
+		safePrint("%s", "Terminal 0 ");
 		int statutTerm0 = (flags & FLAG_TERMINAL0) == FLAG_TERMINAL0; /*A modifier (simplement un exemple d'affichage pour vous aider)*/
-		(statutTerm0 == 0) ? safePrint("OCCUPE\n", NULL) : safePrint("LIBRE\n", NULL);
+		(statutTerm0 == 0) ? safePrint("%s", "OCCUPE\n") : safePrint("%s", "LIBRE\n");
 
-		safePrint("Terminal 1 ", NULL);
+		safePrint("%s", "Terminal 1 ");
 		int statutTerm1 = (flags & FLAG_TERMINAL1) == FLAG_TERMINAL1; /*A modifier (simplement un exemple d'affichage pour vous aider)*/
-		(statutTerm1 == 0) ? safePrint("%s","OCCUPE\n") : safePrint("LIBRE\n", NULL);
+		(statutTerm1 == 0) ? safePrint("%s","OCCUPE\n") : safePrint("%s", "LIBRE\n");
 	}
 }
 
 void verification(void* data){
 	uint8_t err;
-	safePrint("[VERIFICATION] Tache lancee\n", NULL);
+	safePrint("%s", "[VERIFICATION] Tache lancee\n");
 	while(1){
 		/*TODO: Synchronisation unilaterale avec timer 3s*/
 		OSSemPend(semVerification, 0, &err);
@@ -372,7 +373,7 @@ void verification(void* data){
 
 		if (stopSimDebordement){
 			/*TODO: Suspension de toutes les taches de la simulation*/
-			safePrint("[VERIFICATION] Fin de la simulation\n", NULL);
+			safePrint("%s", "[VERIFICATION] Fin de la simulation\n");
 			err |= OSTaskSuspend(GENERATION_PRIO);
 			err |= OSTaskSuspend(ATTERRISSAGE_PRIO);
 			err |= OSTaskSuspend(TERMINAL0_PRIO);
@@ -389,9 +390,9 @@ void remplirAvion(Avion* avion) {
 	avion->retard = rand() % BORNE_SUP_HIGH;
 	avion->origine = rand() % NB_AEROPORTS;
 	do { avion->destination = rand() % NB_AEROPORTS; } while (avion->origine == avion->destination);
-	/*xil_printf("Avion retard = %d\n", avion->retard);
-	xil_printf("Avion origine = %d\n", avion->origine);
-	xil_printf("Avion destination = %d\n", avion->destination);*/
+	safePrint("Avion retard = %d\n", avion->retard);
+	safePrint("Avion origine = %d\n", avion->origine);
+	safePrint("Avion destination = %d\n", avion->destination);
 }
 
 void* safeMalloc(size_t size) {
