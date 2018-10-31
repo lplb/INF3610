@@ -251,7 +251,7 @@ void terminal(void* data)
 {
 	uint8_t err;
 	int numTerminal = *((int*)data);
-	safeFree(data);
+
 	Avion* avion = NULL;
 	safePrint("[TERMINAL %d] Tache lancee\n",  (void*)numTerminal);
 
@@ -283,6 +283,7 @@ void terminal(void* data)
 		OSFlagPost(flagTerminaux, flagTerm, OS_FLAG_SET, &err);
 	}
 
+	safeFree(data);
 }
 
 void decollage(void* data)

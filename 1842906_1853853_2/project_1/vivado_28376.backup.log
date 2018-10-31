@@ -2,10 +2,10 @@
 # Vivado v2018.1 (64-bit)
 # SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018
 # IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018
-# Start of session at: Wed Oct 31 11:37:31 2018
-# Process ID: 53444
+# Start of session at: Tue Oct 30 16:50:02 2018
+# Process ID: 28376
 # Current directory: C:/TEMP/1842906_1853853_2/project_1
-# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent53856 C:\TEMP\1842906_1853853_2\project_1\project_1.xpr
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent29464 C:\TEMP\1842906_1853853_2\project_1\project_1.xpr
 # Log file: C:/TEMP/1842906_1853853_2/project_1/vivado.log
 # Journal file: C:/TEMP/1842906_1853853_2/project_1\vivado.jou
 #-----------------------------------------------------------
@@ -17,11 +17,9 @@ Finished scanning sources
 INFO: [IP_Flow 19-234] Refreshing IP repositories
 INFO: [IP_Flow 19-1704] No user IP repositories specified
 INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'C:/Logiciels/Xilinx/Vivado/2018.1/data/ip'.
-open_project: Time (s): cpu = 00:00:20 ; elapsed = 00:00:16 . Memory (MB): peak = 901.840 ; gain = 153.250
+open_project: Time (s): cpu = 00:00:21 ; elapsed = 00:00:23 . Memory (MB): peak = 841.043 ; gain = 161.629
 update_compile_order -fileset sources_1
 launch_sdk -workspace C:/TEMP/1842906_1853853_2/project_1/project_1.sdk -hwspec C:/TEMP/1842906_1853853_2/project_1/project_1.sdk/design_1_wrapper.hdf
 INFO: [Vivado 12-393] Launching SDK...
 INFO: [Vivado 12-417] Running xsdk -workspace C:/TEMP/1842906_1853853_2/project_1/project_1.sdk -hwspec C:/TEMP/1842906_1853853_2/project_1/project_1.sdk/design_1_wrapper.hdf
 INFO: [Vivado 12-3157] SDK launch initiated. Please check console for any further messages.
-exit
-INFO: [Common 17-206] Exiting Vivado at Wed Oct 31 11:51:03 2018...
