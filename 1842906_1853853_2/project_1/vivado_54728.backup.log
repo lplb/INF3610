@@ -1,0 +1,33 @@
+#-----------------------------------------------------------
+# Vivado v2018.1 (64-bit)
+# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018
+# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018
+# Start of session at: Wed Oct 31 11:34:02 2018
+# Process ID: 54728
+# Current directory: X:/Bureau/INF3610/1842906_1853853_2/project_1
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent52100 X:\Bureau\INF3610\1842906_1853853_2\project_1\project_1.xpr
+# Log file: X:/Bureau/INF3610/1842906_1853853_2/project_1/vivado.log
+# Journal file: X:/Bureau/INF3610/1842906_1853853_2/project_1\vivado.jou
+#-----------------------------------------------------------
+start_gui
+open_project X:/Bureau/INF3610/1842906_1853853_2/project_1/project_1.xpr
+INFO: [Project 1-313] Project file moved from 'C:/TEMP/3610/1842906_1853853/project_1' since last save.
+Scanning sources...
+Finished scanning sources
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [Common 17-41] Interrupt caught. Command should exit soon.
+INFO: [IP_Flow 19-2313] Loaded Vopen_project: Time (s): cpu = 00:00:27 ; elapsed = 00:00:41 . Memory (MB): peak = 845.563 ; gain = 155.887
+update_compile_order -fileset sources_1
+exit
+INFO: [Common 17-206] Exiting Vivado at Wed Oct 31 11:35:01 2018...
+018.1/data/rsb/busdef/AXIMM/busdef.tcl} }"
+ERROR: [BD 41-69] Error sourcing TCL script: 
+    while executing
+"source -notrace {C:/Logiciels/Xilinx/Vivado/2018.1/data/rsb/busdef/clock_signal/busdef.tcl} "
+    (in namespace eval "::xilinx.com_ip_clock_signal_1.0" script line 1)
+    invoked from within
+"namespace eval ::xilinx.com_ip_clock_signal_1.0 { source -notrace {C:/Logiciels/Xilinx/Vivado/2018.1/data/rsb/busdef/clock_signal/busdef.tcl} }"
+INFO: [Common 17-344] 'open_project' was cancelled
+exit
+INFO: [Common 17-206] Exiting Vivado at Wed Oct 31 11:34:57 2018...

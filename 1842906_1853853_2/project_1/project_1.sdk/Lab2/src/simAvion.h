@@ -37,8 +37,12 @@
 #define BORNE_INF_HIGH     	40
 #define BORNE_SUP_HIGH     	60
 
-#define FLAG_TERMINAL0 0x01
-#define FLAG_TERMINAL1 0x02
+#define FLAG_TERMINAL0	0x01
+#define FLAG_TERMINAL1	0x02
+
+#define MUT_MEMORY_PRIO			0
+#define MUT_PRINTF_PRIO			1
+#define MUT_DEBORDEMENT_PRIO	2
 
 
 
@@ -64,7 +68,6 @@ void *Q_decollage_data[10];
 *********************************************************************************************************
 */
 
-/*TODO: Declaration des mailbox (si necessaire)*/
 
 OS_EVENT* mboxTerm0;
 OS_EVENT* mboxTerm1;
@@ -76,7 +79,6 @@ OS_EVENT* mboxTerm1;
 *********************************************************************************************************
 */
 
-/*TODO: Declaration des flags (si necessaire)*/
 
 OS_FLAG_GRP* flagTerminaux;
 
@@ -86,11 +88,20 @@ OS_FLAG_GRP* flagTerminaux;
 *********************************************************************************************************
 */
 
-/*TODO: Declaration des semaphores (si necessaire)*/
 OS_EVENT* semGeneration;
 OS_EVENT* semStats;
 OS_EVENT* semVerification;
 
+
+/*
+*********************************************************************************************************
+*                                              MUTEX
+*********************************************************************************************************
+*/
+
+OS_EVENT* mutMemory;
+OS_EVENT* mutPrintf;
+OS_EVENT* mutDebordement;
 
 /*
 *********************************************************************************************************
@@ -138,8 +149,9 @@ void	statistiques(void *data);
 void 	verification(void* data);
 
 void    errMsg(INT8U err, char* errMSg);
-void 	safePrint(char* msg);
+void* 	safeMalloc(size_t size);
 void	safeFree(void* data);
+void 	safePrint(const char* msg, void* arg);
 
 
 #endif /* SRC_SIMAVION_H_ */
