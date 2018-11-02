@@ -1,0 +1,197 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+//	Sobel.cpp
+//
+///////////////////////////////////////////////////////////////////////////////
+#include "Sobel.h"
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+//	Constructeur
+//
+///////////////////////////////////////////////////////////////////////////////
+Sobel::Sobel( sc_module_name name )
+	: sc_module(name)
+/* À compléter */
+{
+	/*
+	
+	À compléter
+	
+	*/
+	SC_THREAD(thread);
+	sensitive << clk;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+//	Destructeur
+//
+///////////////////////////////////////////////////////////////////////////////
+Sobel::~Sobel()
+{
+	/*
+	
+	À compléter
+	
+	*/
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+//	thread
+//
+///////////////////////////////////////////////////////////////////////////////
+void Sobel::thread(void)
+{
+	/*
+	
+	À compléter
+	
+	*/
+
+	// Variable
+	unsigned int imgWidth, imgHeight;
+	unsigned int tempAddress = 0;
+
+	while (true) {
+		address.write(tempAddress);
+		requestRead.write(true);
+		do {
+			wait(clk->posedge_event());
+		} while (!ack.read());
+
+		imgWidth = data.read();
+
+		tempAddress += 4;
+		address.write(tempAddress);
+		requestRead.write(true);
+		do {
+			wait(clk->posedge_event());
+		} while (!ack.read());
+
+		imgHeight = data.read();
+		requestRead.write(false);
+
+		unsigned int imgSize = imgWidth * imgHeight;
+
+		//Create array
+		uint8_t * image = new uint8_t[imgSize];
+		uint8_t * result = new uint8_t[imgSize];
+		int * imageAsInt = reinterpret_cast<int*>(image);
+		int * resultAsInt = reinterpret_cast<int*>(result);
+
+		for (unsigned int i = 0; i < imgSize / sizeof(int); i++) {
+			//Request element
+			tempAddress += 4;
+			address.write(tempAddress);
+			requestRead.write(true);
+			do {
+				wait(clk->posedge_event());
+			} while (!ack.read());
+
+			imageAsInt[i] = data.read();
+			requestRead.write(false);
+		}
+
+		//For simplicity, assume that the borders don't contain edges
+		for (unsigned int i = 0; i < imgWidth; ++i)
+			result[i] = 0;
+		for (unsigned int i = imgSize - imgWidth; i < imgSize; ++i)
+			result[i] = 0;
+		for (unsigned int i = 0; i < imgSize; i += imgWidth)
+			result[i] = 0;
+		for (unsigned int i = imgWidth - 1; i < imgSize; i += imgWidth)
+			result[i] = 0;
+
+		//Calling the operator for each pixel
+		for (unsigned int i = 1; i < imgHeight - 1; ++i) {
+			for (unsigned int j = 1; j < imgWidth - 1; ++j) {
+				int fullIndex = i * imgWidth + j;
+				result[fullIndex] = sobel_operator(fullIndex, imgWidth, image);
+				
+/**************************				//TODO wait(); avec bon parametre ********************************************/
+/**************************				//TODO wait(); avec bon parametre ********************************************/
+/**************************				//TODO wait(); avec bon parametre ********************************************/
+/**************************				//TODO wait(); avec bon parametre ********************************************/
+/**************************				//TODO wait(); avec bon parametre ********************************************/
+			}
+		}
+
+		//Write back nb. elements at the end
+		tempAddress = 4;
+		for (unsigned int i = 0; i < imgSize / sizeof(int); i++) {
+			//Write each element
+			tempAddress += 4;
+			address.write(tempAddress);
+			data.write(resultAsInt[i]);
+			requestWrite.write(true);
+			do {
+				wait(clk->posedge_event());
+			} while (!ack.read());
+			requestWrite.write(false);
+		}
+
+		delete(image);
+		delete(result);
+		sc_stop();
+		wait();
+		
+	}
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+//	sobel_operator
+//
+///////////////////////////////////////////////////////////////////////////////
+static inline uint8_t getVal(int index, int xDiff, int yDiff, int img_width, uint8_t * Y) 
+{ 
+	return Y[index + (yDiff * img_width) + xDiff]; 
+};
+
+uint8_t Sobel::sobel_operator(const int index, const int imgWidth, uint8_t * image)
+{
+	int x_weight = 0;
+	int y_weight = 0;
+
+	unsigned edge_weight;
+	uint8_t edge_val;
+
+	const char x_op[3][3] = {	{ -1,0,1 },
+								{ -2,0,2 },
+								{ -1,0,1 } };
+
+	const char y_op[3][3] = {	{ 1,2,1 },
+								{ 0,0,0 },
+								{ -1,-2,-1 } };
+
+	//Compute approximation of the gradients in the X-Y direction
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+		// X direction gradient
+		x_weight = x_weight + (getVal(index, i - 1, j - 1, imgWidth, image) * x_op[i][j]);
+
+		// Y direction gradient
+		y_weight = y_weight + (getVal(index, i - 1, j - 1, imgWidth, image) * y_op[i][j]);
+		}
+	}
+
+	edge_weight = std::abs(x_weight) + std::abs(y_weight);
+
+	edge_val = (255 - (uint8_t)(edge_weight));
+
+	//Edge thresholding
+	if (edge_val > 200)
+		edge_val = 255;
+	else if (edge_val < 100)
+		edge_val = 0;
+
+	return edge_val;
+}
+
+
