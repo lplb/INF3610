@@ -95,9 +95,10 @@ void Sobelv2::thread(void)
 
 		tempAddress = 4;
 		//Calling the operator for each pixel
+		int index = -1;
 		for (unsigned int i = 1; i < imgHeight - 1; ++i) {
-			for (unsigned int j = 1; j < imgWidth - 1; ++j) {
-				int fullIndex = i * imgWidth + j;
+			for (unsigned int j = 0; j < imgWidth; j+=sizeof(int)) {
+				index+=1;
 				//Request element
 				tempAddress += 4;
 				address.write(tempAddress);
@@ -106,7 +107,7 @@ void Sobelv2::thread(void)
 					wait(clk->posedge_event());
 				} while (!ackReaderWriter.read());
 
-				imageAsInt[fullIndex] = dataRW.read();
+				imageAsInt[index] = dataRW.read();
 				requestRead.write(false);
 			}
 
