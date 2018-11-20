@@ -25,7 +25,7 @@ class CacheMem : public sc_module
 		sc_in<bool>				requestFromCPU;
 		sc_out<bool>			ackToCPU;
 
-		sc_out<unsigned int> 	address;
+		sc_inout<unsigned int> 	address;
 		sc_in<unsigned int>		dataReader;
 		sc_out<bool>			requestToReader;
 		sc_in<bool>				ackFromReader;
