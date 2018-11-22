@@ -78,9 +78,9 @@ void Sobelv2::thread(void)
 		unsigned int imgSize = imgWidth * imgHeight;
 
 		//Create array
-		uint8_t * image = new uint8_t[imgSize];
+		uint8_t * imageBuffer = new uint8_t[imgWidth * 4];
 		uint8_t * result = new uint8_t[imgSize];
-		int * imageAsInt = reinterpret_cast<int*>(image);
+		unsigned int * imageBufferAsUInt = reinterpret_cast<unsigned int*>(imageBuffer);
 		int * resultAsInt = reinterpret_cast<int*>(result);
 
 		//For simplicity, assume that the borders don't contain edges
@@ -96,26 +96,27 @@ void Sobelv2::thread(void)
 		tempAddress = 4;
 		//Calling the operator for each pixel
 		int index = -1;
-		for (unsigned int i = 1; i < imgHeight - 1; ++i) {
+		for (unsigned int i = 0; i < imgHeight; ++i) {
 			for (unsigned int j = 0; j < imgWidth; j+=sizeof(int)) {
 				index+=1;
 				//Request element
 				tempAddress += 4;
 				address.write(tempAddress);
-				requestRead.write(true);
+				length.write(sizeof(int));
+				addressRes.write(imageBufferAsUInt + (i % 4)*imgWidth + j/ sizeof(int));
+				requestCache.write(true);
 				do {
 					wait(clk->posedge_event());
-				} while (!ackReaderWriter.read());
+				} while (!ackCache.read());
 
-				imageAsInt[index] = dataRW.read();
-				requestRead.write(false);
+				requestCache.write(false);
 			}
 
 			if (i >= 2)
 			{
 				for (unsigned int j = 1; j < imgWidth - 1; ++j) {
-					int fullIndex = (i-1) * imgWidth + j;
-					result[fullIndex] = Sobelv2_operator(fullIndex, imgWidth, image);
+					int fullIndex = ((i-1) % 4) * imgWidth + j;
+					result[fullIndex] = Sobelv2_operator(fullIndex, imgWidth, imageBuffer);
 
 					/**************************				//TODO wait(); avec bon parametre ********************************************/
 					/**************************				//TODO wait(); avec bon parametre ********************************************/
@@ -124,18 +125,6 @@ void Sobelv2::thread(void)
 					/**************************				//TODO wait(); avec bon parametre ********************************************/
 				}
 			}
-		}
-
-		//Derniere ligne (excluant bord)
-		for (unsigned int j = 1; j < imgWidth - 1; ++j) {
-			int fullIndex = (imgHeight - 1) * imgWidth + j;
-			result[fullIndex] = Sobelv2_operator(fullIndex, imgWidth, image);
-
-			/**************************				//TODO wait(); avec bon parametre ********************************************/
-			/**************************				//TODO wait(); avec bon parametre ********************************************/
-			/**************************				//TODO wait(); avec bon parametre ********************************************/
-			/**************************				//TODO wait(); avec bon parametre ********************************************/
-			/**************************				//TODO wait(); avec bon parametre ********************************************/
 		}
 
 		//Write back nb. elements at the end
@@ -152,7 +141,7 @@ void Sobelv2::thread(void)
 			requestWrite.write(false);
 		}
 
-		delete(image);
+		delete(imageBuffer);
 		delete(result);
 		sc_stop();
 		wait();
